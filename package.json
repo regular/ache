@@ -1,0 +1,18 @@
+{
+  "name": "ache",
+  "version": "0.0.0",
+  "description": "A build tool for very large web projects",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jan Bölsche <jan@lagomorph.de>",
+  "license": "BSD",
+  "dependencies": {
+    "bluebird": "^1.2.2",
+    "dashdash": "^1.5.0",
+    "lodash": "^2.4.1",
+    "coffee-script": "^1.7.1",
+    "debug": "^0.8.0"
+  }
+}
