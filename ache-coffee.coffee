@@ -32,4 +32,7 @@ coffee = (source, options = {}) ->
             fs.statAsync targetPath
         )
 
-module.exports = coffee
+module.exports = (modules) ->
+    (source, options) ->
+        result = coffee source, options
+        result.addPrerequisite modules

@@ -4,15 +4,14 @@ debug = require('debug')('Achefile')
 
 {Node, File, updateIfNeeded} = require './ache'
 
-coffee = require './ache-coffee'
 npm = require './ache-npm'
+packageJSON = new File './package.json'
+modules = updateIfNeeded packageJSON, npm packageJSON
+
+coffee = require('./ache-coffee')(modules)
 
 coffeeNode = new File './test.coffee'
 jsNode = updateIfNeeded coffeeNode, coffee coffeeNode
-
-packageJSON = new File './package.json'
-
-modules = updateIfNeeded packageJSON, npm packageJSON
 
 modules.getPromise().then(
     -> jsNode.getPromise()
