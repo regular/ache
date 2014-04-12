@@ -13,9 +13,7 @@ coffee = require('./ache-coffee')(modules)
 coffeeNode = new File './test.coffee'
 jsNode = updateIfNeeded coffeeNode, coffee coffeeNode
 
-modules.getPromise().then(
-    -> jsNode.getPromise()
-).then(
+jsNode.getPromise().then(
     (stats) ->
         debug "JS file with #{stats.size} bytes created on #{stats.mtime}"
         return stats

@@ -4,8 +4,14 @@ debug = require('debug')('ache')
 {_} = require 'lodash'
 
 class Node
-    constructor: (@path, @getPromise) ->
+    constructor: (@path, getPromise) ->
         @prerequisits = []
+        @_promise = null
+        @_getPromise = getPromise
+
+    getPromise: ->
+        @_promise ?= @_getPromise()
+        return @_promise
 
     addPrerequisite: (p) ->
         if p in @prerequisits then return
