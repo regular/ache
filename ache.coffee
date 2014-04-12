@@ -10,28 +10,33 @@ class File extends Node
         super path, ->
             fs.statAsync path
 
-updateIfNeeded = (source, target, build) ->
+updateIfNeeded = (source, target) ->
     # do we have a cached version
     cachedNode = new File target.path
 
-    cachedNode.getPromise().then( (cachedStats) ->
-        debug "there is a cached version for #{target.path} from #{cachedStats.mtime}"
-        return source.getPromise().then(
-            (sourceStats) ->
+    return new Node target.path, ->
+        cachedNode.getPromise().then( (cachedStats) ->
+            debug "there is a cached version for #{target.path} from #{cachedStats.mtime}"
+            
+            compareDates = (sourceStats) ->
                 # is the cache valid?
                 if cachedStats.mtime.getTime() > sourceStats.mtime.getTime()
-                    debug 'it is up-to-date.'
+                    debug "#{target.path} is up-to-date."
                     return cachedStats
                 else
-                    debug 'it is outdated.'
+                    debug "#{target.path} is outdated."
                     return target.getPromise()
-        )
-    ).catch( (err) ->
-        if err.path is cachedNode.path
-            debug "there is NO cached version for #{target.path}"
-            return target.getPromise()
-        throw err
-    )
+
+            source.getPromise().then(
+                compareDates
+            ).error (err) ->
+                debug "cache origin #{source.path} not found!"
+
+        ).error (err) ->
+            if err.cause.path is cachedNode.path
+                debug "there is NO cached version for #{target.path}"
+                return target.getPromise()
+            throw err
 
 module.exports = {
     Node, File, updateIfNeeded

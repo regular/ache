@@ -1,6 +1,6 @@
 {
   "name": "ache",
-  "version": "0.0.0",
+  "version": "0.0.1-beta",
   "description": "A build tool for very large web projects",
   "main": "index.js",
   "scripts": {
