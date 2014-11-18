@@ -3,7 +3,7 @@
 
 ### GOALS
 
-grunt and gulp are popular in the JS community. Both however are more or less simple task runners wuth varying degrees of caching.
+grunt and gulp are popular in the JS community. Both however are more or less simple task runners with varying degrees of caching.
 
   * The goal hiere is to reach make's level of efficiency: run the actions necessary, not more, not less. Do this as efficient as possible.
 
@@ -13,24 +13,27 @@ grunt and gulp are popular in the JS community. Both however are more or less si
 
   * an output of an action can be multiple physical files (think: source maps, font files, ...)
 
-### tools abstraction
-- streaming data
+### tool/action abstraction
+- is streaming data
 - can have options
 - multiple inputs and outputs
 - adapter might use temp files to implement streaming
+- use locally installed binaries found in `node_modules`
 
-planned tool support via npm modules
-	ache-fontcustom
-	ache-coffee
-	ache-jade
-	ache-stylus
-	ache-component
-	ache-mocha
-	ache-casper
+Planned first-wave tool support via npm modules
+- ache-fontcustom
+- ache-coffee
+- ache-jade
+- ache-stylus
+- ache-component
+- ache-mocha
+- ache-casper
 
-	npm install ache-casper installs all necessary binaries
+	npm install ache-casper # installs all necessary binaries
 
-(how can we do this without flooding the npm namespace, .. there's a new npm feature, right?)
+Q: how can we do this without flooding the npm namespace?
+A: there's a new npm feature, right?
+A: several generic built-in adapter to wrap around typical tool functions, promisify()-style
 
 ## it's fractal
 - a part consists of parts
@@ -39,9 +42,9 @@ planned tool support via npm modules
 
 A node provides a  promise of a part
 
-## removing tylical pain points
+## removing typlical pain points
 
-Error handling shall takes temporary outtakes of external machiner into account.
+Error handling shall takes temporary outtakes of external machines/services into account.
 
 
 ## Example Achefile (using CoffeeScript)
