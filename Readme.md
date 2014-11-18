@@ -45,7 +45,7 @@ A node provides a  promise of a part
 
 ## removing typlical pain points
 
-Error handling shall takes temporary outtakes of external machines/services into account.
+Error handling shall take temporary outtakes of external machines/services into account.
 
 
 ## Example Achefile (using CoffeeScript)
