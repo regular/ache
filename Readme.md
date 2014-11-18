@@ -1,5 +1,9 @@
 
-## This is ache
+*this is very experimental* if you are looking for something that actually is usable, you should look somewhere else.
+
+## What's aching?
+
+Ache is not a build tool. It is a node module that makes it very easy to create a project-specific program that builds your project in the most efficient way possible. We recommend calling this program `ache` :)
 
 ### GOALS
 
