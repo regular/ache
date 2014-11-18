@@ -23,17 +23,18 @@ grunt and gulp are popular in the JS community. Both however are more or less si
 Planned first-wave tool support via npm modules
 - ache-fontcustom
 - ache-coffee
+- ache-ejs
 - ache-jade
 - ache-stylus
-- ache-component
-- ache-mocha
+- ache-browserify
+- ache-lab
 - ache-casper
 
-	npm install ache-casper # installs all necessary binaries
+    npm install ache-casper # installs all necessary binaries
 
-Q: how can we do this without flooding the npm namespace?
-A: there's a new npm feature, right?
-A: several generic built-in adapter to wrap around typical tool functions, promisify()-style
+- Q: how can we do this without flooding the npm namespace?
+- A: there's a new npm feature, right?
+- A: several generic built-in adapter to wrap around typical tool functions, promisify()-style
 
 ## it's fractal
 - a part consists of parts
