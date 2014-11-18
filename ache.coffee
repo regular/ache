@@ -61,7 +61,7 @@ class PersistentNode extends Node
             return ptime > mtime
         ).error( fileNotFoundHandler
         ).error OutdatedError, (err) ->
-            debug "a prerequisite of #{path} is outdated."
+            debug "a prerequisite of #{path} needs attention."
             return true
 
 class File extends PersistentNode
@@ -77,7 +77,7 @@ class File extends PersistentNode
     getPromise: ->
         @isOutdated().then (outdated) =>
             if outdated
-                debug "file is outdated: #{@path}"
+                debug "file needs attention: #{@path}"
                 return super()
             else
                 debug "file is up-to-date: #{@path}"
@@ -104,7 +104,7 @@ class Bundle extends PersistentNode
     getPromise: ->
         @isOutdated().then (outdated) =>
             if outdated
-                debug "bundle is outdated: #{@path}"
+                debug "bundle needs attention: #{@path}"
                 return super()
             else
                 debug "bundle is up-to-date: #{@path}"
