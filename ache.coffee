@@ -3,9 +3,12 @@ fs = Promise.promisifyAll require 'fs'
 debug = require('debug')('ache')
 {_} = require 'lodash'
 
+class OutdatedError extends Error
+    constructor: (msg) -> super "OutdatedError #{msg}"
+
 class Node
-    constructor: (@path, getPromise) ->
-        @prerequisits = []
+    constructor: (getPromise) ->
+        @prerequisites = []
         @_promise = null
         @_getPromise = getPromise
 
@@ -14,57 +17,99 @@ class Node
         return @_promise
 
     addPrerequisite: (p) ->
-        if p in @prerequisits then return
-        @prerequisits.push p
+        if p in @prerequisites then return
+        @prerequisites.push p
         return @
 
-class File extends Node
-    constructor: (path) ->
-        super path, ->
-            fs.statAsync path
+    ## This returns the mtime of the newest
+    ## dependency or throws when at least
+    ## one dependency is outdated.
+    ## *obviously also throws when one does not 
+    ## implement isOutdated, this is by design.
+    getPrerequisitesMTime: ->
+        reduceToHighest = (highest, node) ->
+            node.getMTime().then (timestamp) ->
+                if timestamp > highest then timestamp else highest
 
-updateIfNeeded = (source, target) ->
-    # do we have a cached version
-    cachedNode = new File target.path
-    cachedNode.prerequisits = _.clone(target.prerequisits)
+        Promise.map(@prerequisites, (p) -> p.isOutdated()).then (outdated) =>
+            if _.any(outdated) then throw new OutdatedError()
+            Promise.reduce(@prerequisites, reduceToHighest, 0)
 
-    return new Node target.path, ->
-        cachedNode.getPromise().then( (cachedStats) ->
-            debug "there is a cached version for #{target.path} from #{cachedStats.mtime}"
-            cache = 
-                node: cachedNode
-                timestamp: cachedStats.mtime.getTime()
+class PersistentNode extends Node
 
-            ## can we find a more recent timestamp
-            ## among the dependencies (source + prerequisits)?
-            dependencies = [source].concat target.prerequisits
-            reduce = (highest, node) ->
-                node.getPromise().then (stats) ->
-                    timestamp = stats.mtime.getTime()
-                    highest = {node, timestamp} if timestamp > highest.timestamp
-                    return highest
+    getMTime: -> throw new Error('getTime is not implemented')
 
-            Promise.reduce(dependencies, reduce, cache).then( (mostRecent) ->
-                if mostRecent.node is cachedNode
-                   debug "#{target.path} is up-to-date."
-                   return cachedStats
-                else
-                    # one of the dependencies was modified after the cached
-                    # target file.
-                    debug "#{target.path} is outdated."
-                    debug "(#{mostRecent.node.path} is newer)"
-                    return target.getPromise()
-
-            ).error (err) ->
-                debug "cache dependency not found! #{err.cause.path}"
+    isOutdated: ->
+        fileNotFoundHandler = (err) =>
+            if err.cause.code is 'ENOENT'
+                debug "file does not exist: #{err.cause.path}"
+                return true
+            else
+                console.log "fileNotFoundHandler: #{err}"
                 throw err
 
-        ).error (err) ->
-            if err.cause.path is cachedNode.path
-                debug "there is NO cached version for #{target.path}"
-                return target.getPromise()
-            throw err
+        if @prerequisites.length is 0
+            # just make sure, we exist
+            return @getMTime().then( =>
+                debug "file #{@path} has no prerequisites"
+                return false
+            ).error fileNotFoundHandler
+
+        ## TODO: if a prerequisite does not implement
+        ## getMTime, return true as well
+        Promise.join(@getPrerequisitesMTime(), @getMTime()).spread( (ptime, mtime) ->
+            return ptime > mtime
+        ).error( fileNotFoundHandler
+        ).error OutdatedError, (err) ->
+            debug "a prerequisite of #{path} is outdated."
+            return true
+
+class File extends PersistentNode
+    constructor: (@path, getPromise = null) ->
+        super getPromise or @getStats
+
+    getStats: -> 
+        fs.statAsync @path
+
+    getMTime: ->
+        @getStats().then (stats) -> stats.mtime.getTime()
+
+    getPromise: ->
+        @isOutdated().then (outdated) =>
+            if outdated
+                debug "file is outdated: #{@path}"
+                return super()
+            else
+                debug "file is up-to-date: #{@path}"
+                return @getStats()
+
+# an immutable array of Nodes that can only
+# be built together.
+class Bundle extends PersistentNode
+    constructor: (nodes, getPromise) ->
+        @length = nodes.length
+        for i in [0...nodes.length]
+            @[i] = nodes[i]
+        super getPromise
+
+    ## this returns the mtime of the oldest
+    ## file in the bundle
+    getMTime: ->
+        reduceToLowest = (lowest, node) ->
+            node.getTime().then (timestamp) ->
+                if timestamp < lowest then timestamp else lowest
+        console.log 'HERE'
+        Promise.reduce(this, reduceToLowest, Number.MAX_VALUE)
+
+    getPromise: ->
+        @isOutdated().then (outdated) =>
+            if outdated
+                debug "bundle is outdated: #{@path}"
+                return super()
+            else
+                debug "bundle is up-to-date: #{@path}"
+                return [node.getStats() for node in this]
 
 module.exports = {
-    Node, File, updateIfNeeded
+    Node, File, Bundle
 }

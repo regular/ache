@@ -2,16 +2,18 @@ Promise = require 'bluebird'
 fs = Promise.promisifyAll require 'fs'
 debug = require('debug')('Achefile')
 
-{Node, File, updateIfNeeded} = require './ache'
+{Node, File, Bundle} = require './ache'
 
 npm = require './ache-npm'
-packageJSON = new File './package.json'
-modules = updateIfNeeded packageJSON, npm packageJSON
+
+modules = npm new File './package.json'
 
 coffee = require('./ache-coffee')(modules)
 
-coffeeNode = new File './test.coffee'
-jsNode = updateIfNeeded coffeeNode, coffee coffeeNode
+bundle = coffee new File './test.coffee'
+[jsNode, stuff...] = bundle
+
+console.log jsNode.prerequisites
 
 jsNode.getPromise().then(
     (stats) ->

@@ -6,7 +6,7 @@ Path = require 'path'
 Npm = require 'npm'
 _ = require 'lodash'
 
-{Node} = require './ache'
+{File} = require './ache'
 
 install = (source, options = {}) ->
     # source is a Node for a package.json file
@@ -18,7 +18,7 @@ install = (source, options = {}) ->
     debug "Adding rule to install modules into #{targetPath}"
 
     # we must return a new Node for the node_modules directory
-    return new Node targetPath, ->
+    node_modules = new File targetPath, ->
         source.getPromise().then( ->
             fs.readFileAsync source.path, 'utf8'
         ).then( (pkg) ->
@@ -36,5 +36,8 @@ install = (source, options = {}) ->
         ).catch SyntaxError, (e) ->
             e.message = "Error parsing #{source.path}: " + e.message
             throw e
+
+    node_modules.addPrerequisite source
+    return node_modules
 
 module.exports = install
