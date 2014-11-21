@@ -1,3 +1,4 @@
+#!/usr/bin/env coffee
 Promise = require 'bluebird'
 fs = Promise.promisifyAll require 'fs'
 debug = require('debug')('Achefile')
@@ -13,16 +14,17 @@ coffee = require('./ache-coffee')(modules)
 bundle = coffee new File './test.coffee'
 [jsNode, stuff...] = bundle
 
+console.log ".js file prerequisites:"
 console.log jsNode.prerequisites
 
 jsNode.getPromise().then(
     (stats) ->
         debug "JS file with #{stats.size} bytes created on #{stats.mtime}"
         return stats
-).catch (error) ->
+).catch( (error) ->
     console.error "ACHE FAILED with error: \n#{error}"
     console.error error.stack
-
+)
 
 
 

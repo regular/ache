@@ -11,10 +11,11 @@ class Node
         @prerequisites = []
         @_promise = null
         @_getPromise = getPromise
+        @name = "unnamed"
 
     getPromise: ->
-        @_promise ?= @_getPromise()
-        return @_promise
+        @_promise ?= Promise.all(p.getPromise() for p in @prerequisites).then =>
+            @_getPromise()
 
     addPrerequisite: (p) ->
         if p in @prerequisites then return
@@ -32,7 +33,9 @@ class Node
                 if timestamp > highest then timestamp else highest
 
         Promise.map(@prerequisites, (p) -> p.isOutdated()).then (outdated) =>
-            if _.any(outdated) then throw new OutdatedError()
+            if _.any(outdated)
+                debug "at least one prerequisite is newer than #{@name}"
+                throw new OutdatedError()
             Promise.reduce(@prerequisites, reduceToHighest, 0)
 
 class PersistentNode extends Node
@@ -45,7 +48,7 @@ class PersistentNode extends Node
                 debug "file does not exist: #{err.cause.path}"
                 return true
             else
-                console.log "fileNotFoundHandler: #{err}"
+                debug "fileNotFoundHandler: #{err}"
                 throw err
 
         if @prerequisites.length is 0
@@ -60,15 +63,16 @@ class PersistentNode extends Node
         Promise.join(@getPrerequisitesMTime(), @getMTime()).spread( (ptime, mtime) ->
             return ptime > mtime
         ).error( fileNotFoundHandler
-        ).error OutdatedError, (err) ->
-            debug "a prerequisite of #{path} needs attention."
+        ).catch OutdatedError, (err) =>
+            debug "a prerequisite of #{@name} needs attention."
             return true
 
 class File extends PersistentNode
     constructor: (@path, getPromise = null) ->
         super getPromise or @getStats
+        @name = @path
 
-    getStats: -> 
+    getStats: ->
         fs.statAsync @path
 
     getMTime: ->
@@ -91,6 +95,7 @@ class Bundle extends PersistentNode
         for i in [0...nodes.length]
             @[i] = nodes[i]
         super getPromise
+        @name = "Bundle"
 
     ## this returns the mtime of the oldest
     ## file in the bundle
@@ -108,7 +113,7 @@ class Bundle extends PersistentNode
                 return super()
             else
                 debug "bundle is up-to-date: #{@path}"
-                return [node.getStats() for node in this]
+                return [file.getStats() for file in this]
 
 module.exports = {
     Node, File, Bundle

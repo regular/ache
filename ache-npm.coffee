@@ -19,7 +19,9 @@ install = (source, options = {}) ->
 
     # we must return a new Node for the node_modules directory
     node_modules = new File targetPath, ->
+        debug "node_modules.gePromise() was called"
         source.getPromise().then( ->
+            debug "reading #{source.path}"
             fs.readFileAsync source.path, 'utf8'
         ).then( (pkg) ->
             pkg = JSON.parse pkg
@@ -33,9 +35,11 @@ install = (source, options = {}) ->
             fs.utimesAsync targetPath, now, now
         ).then( ->
             fs.statAsync targetPath
-        ).catch SyntaxError, (e) ->
+        ).catch( SyntaxError, (e) ->
             e.message = "Error parsing #{source.path}: " + e.message
             throw e
+        ).catch (error)  ->
+            debug "npm install failedi #{error}"
 
     node_modules.addPrerequisite source
     return node_modules
